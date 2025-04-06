@@ -71,10 +71,13 @@ class rankineView():
             self.le_TurbineInletCondition.setEnabled(False)
         else:
             pass
-            #JES Missing Code
-            #step 1: get saturated properties at PHigh
-            #step 2: convert the saturation temperature to proper units
-            #step 3:  update the text in the le_TurbineInletCondition widget
+            # Get saturation temp at PHigh
+            PCF = 1 if SI else UC.psi_to_bar
+            p_high = float(self.le_PHigh.text()) * PCF
+            Tsat = Model.steam.getsatProps_p(p_high).tsat
+            T_disp = Tsat if SI else UC.C_to_F(Tsat)
+            self.le_TurbineInletCondition.setText(f"{T_disp:.2f}")
+            self.le_TurbineInletCondition.setEnabled(True)
 
         # endregion
         x = self.rdo_Quality.isChecked()
@@ -89,11 +92,24 @@ class rankineView():
                  finally, we need to call the function self.SelectQualityOrTHigh()
                  :return:
                  """
-        #JES Missing Code
+        SI = self.rb_SI.isChecked()
+        PCF = 1 if SI else UC.psi_to_bar
+        try:
+            p_high = float(self.le_PHigh.text()) * PCF
+            self.lbl_SatPropHigh.setText(Model.steam.getsatProps_p(p_high).getTextOutput(SI))
+            self.selectQualityOrTHigh(Model)
+        except:
+            self.lbl_SatPropHigh.setText("Invalid input")
         pass
 
     def setNewPLow(self, Model=None):
-        #JES Missing Code
+        SI = self.rb_SI.isChecked()
+        PCF = 1 if SI else UC.psi_to_bar
+        try:
+            p_low = float(self.le_PLow.text()) * PCF
+            self.lbl_SatPropLow.setText(Model.steam.getsatProps_p(p_low).getTextOutput(SI))
+        except:
+            self.lbl_SatPropLow.setText("Invalid input")
         pass
 
     def outputToGUI(self, Model=None):
@@ -130,15 +146,27 @@ class rankineView():
 
         #Step 1. Update pressures for PHigh and PLow
         pCF=1 if Model.SI else UC.bar_to_psi
-        #JES Missing Code
+        self.le_PHigh.setText("{:.2f}".format(Model.p_high * pCF))
+        self.le_PLow.setText("{:.2f}".format(Model.p_low * pCF))
 
         #Step 2. Update THigh if it is not None
         if not self.rdo_Quality.isChecked():
-            #JES Missing Code
+            T_disp = Model.t_high if Model.SI else UC.C_to_F(Model.t_high)
+            self.le_TurbineInletCondition.setText("{:.2f}".format(T_disp))
             pass
 
         #Step 3. Update the units for labels
-        #JES Missing Code
+        self.lbl_PHigh.setText("P High ({})".format("bar" if Model.SI else "psi"))
+        self.lbl_PLow.setText("P Low ({})".format("bar" if Model.SI else "psi"))
+
+        hUnit = "kJ/kg" if Model.SI else "BTU/lb"
+        self.lbl_H1Units.setText(hUnit)
+        self.lbl_H2Units.setText(hUnit)
+        self.lbl_H3Units.setText(hUnit)
+        self.lbl_H4Units.setText(hUnit)
+        self.lbl_TurbineWorkUnits.setText(hUnit)
+        self.lbl_PumpWorkUnits.setText(hUnit)
+        self.lbl_HeatAddedUnits.setText(hUnit)
         pass
 
     def print_summary(self, Model=None):
